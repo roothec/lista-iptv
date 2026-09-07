@@ -1,0 +1,33 @@
+name: Regenerar lista
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # cada lunes a las 06:00 UTC (01:00 Colombia)
+  workflow_dispatch:       # y a mano desde la pestaña Actions
+
+permissions:
+  contents: write
+
+jobs:
+  regenerar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generar la lista
+        # sin --check a proposito: el runner esta en EE.UU. y muchos canales
+        # latinoamericanos se le bloquean por geografia. Verificarlos desde
+        # aqui borraria canales que en Colombia funcionan.
+        run: python3 lista.py -o mi-lista.m3u
+
+      - name: Publicar solo si cambio
+        run: |
+          if git diff --quiet mi-lista.m3u; then
+            echo "sin cambios"
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add mi-lista.m3u
+            git commit -m "Lista regenerada: $(grep -c '^#EXTINF' mi-lista.m3u) canales"
+            git push
+          fi
