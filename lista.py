@@ -60,6 +60,18 @@ def main():
     cats, langs = set(a.cats.split(",")), set(a.langs.split(","))
 
     canales = {c["id"]: c for c in baja("channels")}
+
+    # logos: un endpoint aparte. Sin esto el televisor muestra los canales
+    # sin imagen. Preferimos los marcados en uso, y de esos el mas grande.
+    logos = {}
+    for l in baja("logos"):
+        cid, url = l.get("channel"), l.get("url")
+        if not cid or not url or not url.startswith("https"):
+            continue
+        peso = (bool(l.get("in_use")), (l.get("width") or 0) * (l.get("height") or 0))
+        if cid not in logos or peso > logos[cid][0]:
+            logos[cid] = (peso, url)
+    logos = {k: v[1] for k, v in logos.items()}
     idiomas = collections.defaultdict(set)
     for f in baja("feeds"):
         if f.get("channel"):
@@ -101,7 +113,8 @@ def main():
     with open(a.salida, "w", encoding="utf-8") as f:
         f.write('#EXTM3U x-tvg-url="https://iptv-org.github.io/epg/index.xml"\n')
         for grupo, nombre, pais, cid, s in sel:
-            f.write(f'#EXTINF:-1 tvg-id="{cid}" group-title="{grupo}",{nombre} [{pais}]\n{s["url"]}\n')
+            logo = f' tvg-logo="{logos[cid]}"' if cid in logos else ""
+            f.write(f'#EXTINF:-1 tvg-id="{cid}"{logo} group-title="{grupo}",{nombre} [{pais}]\n{s["url"]}\n')
 
     extra = propios()
     if extra:
