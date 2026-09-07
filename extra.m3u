@@ -1,0 +1,7 @@
+# Tus canales, uno detras de otro. Formato: una linea #EXTINF y debajo la URL.
+# Si no pones group-title, van al grupo "Mios". El regenerado semanal no toca
+# este fichero: lo lee y lo anade al final de mi-lista.m3u.
+#
+# Ejemplo (quita la almohadilla de las dos lineas para activarlo):
+# #EXTINF:-1 group-title="Mios",Mi canal de prueba
+# https://ejemplo.com/stream/playlist.m3u8

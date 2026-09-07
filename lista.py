@@ -5,6 +5,9 @@
   lista.py --check         -> ademas verifica que cada stream responda (mas lento)
   lista.py --cats anime,documentary --langs spa,eng
 
+Los canales propios van en extra.m3u (mismo formato M3U). Se anaden al final
+y el regenerado semanal NUNCA los pisa, porque viven en otro fichero.
+
 Filtra lo que NO sirve en SS IPTV: streams que exigen user-agent o referrer
 propios, porque la app del televisor no puede mandar esas cabeceras.
 """
@@ -31,6 +34,21 @@ def vivo(url):
             return r.status == 200
     except Exception:
         return False
+
+def propios(ruta="extra.m3u"):
+    """Lee extra.m3u: los canales que anade el usuario a mano."""
+    try:
+        lineas = [l.strip() for l in open(ruta, encoding="utf-8") if l.strip()]
+    except FileNotFoundError:
+        return []
+    fuera, pend = [], None
+    for l in lineas:
+        if l.startswith("#EXTINF"):
+            pend = l if "group-title=" in l else l.replace("#EXTINF:-1", '#EXTINF:-1 group-title="Mios"', 1)
+        elif not l.startswith("#") and pend:
+            fuera.append((pend, l)); pend = None
+    return fuera
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -85,7 +103,13 @@ def main():
         for grupo, nombre, pais, cid, s in sel:
             f.write(f'#EXTINF:-1 tvg-id="{cid}" group-title="{grupo}",{nombre} [{pais}]\n{s["url"]}\n')
 
-    print(f"{a.salida}: {len(sel)} canales")
+    extra = propios()
+    if extra:
+        with open(a.salida, "a", encoding="utf-8") as f:
+            for info, url in extra:
+                f.write(f"{info}\n{url}\n")
+
+    print(f"{a.salida}: {len(sel) + len(extra)} canales ({len(extra)} propios)")
     for g, n in collections.Counter(t[0] for t in sel).most_common():
         print(f"   {g:<22}{n:>5}")
 
