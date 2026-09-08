@@ -10,11 +10,17 @@ y el regenerado semanal NUNCA los pisa, porque viven en otro fichero.
 
 Filtra lo que NO sirve en SS IPTV: streams que exigen user-agent o referrer
 propios, porque la app del televisor no puede mandar esas cabeceras.
+
+--check apunta lo que no responde en muertos.txt, y TODAS las ejecuciones lo
+leen para excluirlo. Sin eso el regenerado semanal (que corre sin --check, a
+proposito, porque el runner de GitHub esta en EE.UU.) devolveria cada lunes
+los canales muertos que ya habias podado desde casa.
 """
-import argparse, collections, json, sys, urllib.request
+import argparse, collections, datetime, json, sys, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 API = "https://iptv-org.github.io/api"
+MUERTOS = "muertos.txt"
 GRUPOS = {
     "animation": "Anime y animacion", "documentary": "Documentales",
     "science": "Ciencia", "culture": "Cultura", "education": "Educacion",
@@ -34,6 +40,29 @@ def vivo(url):
             return r.status == 200
     except Exception:
         return False
+
+def lee_muertos(ruta=MUERTOS):
+    """URL -> fecha en que se comprobo, desde casa, que no responde."""
+    fuera = {}
+    try:
+        for l in open(ruta, encoding="utf-8"):
+            l = l.strip()
+            if l and not l.startswith("#"):
+                url, _, fecha = l.partition("\t")
+                fuera[url] = fecha or "1970-01-01"
+    except FileNotFoundError:
+        pass
+    return fuera
+
+def escribe_muertos(muertos, ruta=MUERTOS):
+    """Ordenado por URL: asi el diff de git solo muestra lo que cambio."""
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write("# Streams que no respondieron al verificar DESDE CASA (lista.py --check).\n"
+                "# Todas las ejecuciones los excluyen, incluido el regenerado semanal, que\n"
+                "# corre sin --check: sin este fichero volverian cada lunes.\n"
+                "# Lo mantiene el propio script, no hace falta editarlo a mano.\n")
+        for url, fecha in sorted(muertos.items()):
+            f.write(f"{url}\t{fecha}\n")
 
 def propios(ruta="extra.m3u"):
     """Lee extra.m3u: los canales que anade el usuario a mano."""
@@ -55,9 +84,21 @@ def main():
     p.add_argument("--cats", default=",".join(GRUPOS))
     p.add_argument("--langs", default="spa,eng")
     p.add_argument("--check", action="store_true")
+    p.add_argument("--reintentar", type=int, default=30, metavar="DIAS",
+                   help="con --check, da otra oportunidad a los muertos de hace "
+                        "mas de DIAS dias (0 = a todos). Los canales resucitan.")
     p.add_argument("-o", "--salida", default="mi-lista.m3u")
     a = p.parse_args()
     cats, langs = set(a.cats.split(",")), set(a.langs.split(","))
+
+    # lista negra: sin --check se respeta tal cual; con --check, los que llevan
+    # mas de --reintentar dias apuntados vuelven a la carrera por si resucitaron.
+    muertos = lee_muertos()
+    reintenta = set()
+    if a.check:
+        limite = (datetime.date.today() - datetime.timedelta(days=a.reintentar)).isoformat()
+        reintenta = {u for u, f in muertos.items() if f <= limite}
+    bloqueadas = set(muertos) - reintenta
 
     canales = {c["id"]: c for c in baja("channels")}
 
@@ -83,9 +124,15 @@ def main():
         n = int("".join(ch for ch in cal if ch.isdigit()) or 0)
         return (s["url"].startswith("https"), n)
     mejor = {}
+    catalogo = set()
     for s in baja("streams"):
-        cid = s.get("channel")
+        cid, url = s.get("channel"), s.get("url")
+        if not url:
+            continue
+        catalogo.add(url)
         if not cid or s.get("user_agent") or s.get("referrer"):
+            continue
+        if url in bloqueadas:
             continue
         if cid not in mejor or orden(s) > orden(mejor[cid]):
             mejor[cid] = s
@@ -105,9 +152,30 @@ def main():
         print(f"verificando {len(sel)} streams...", file=sys.stderr)
         with ThreadPoolExecutor(max_workers=40) as ex:
             ok = list(ex.map(lambda t: vivo(t[4]["url"]), sel))
-        muertos = len(sel) - sum(ok)
+        hoy = datetime.date.today().isoformat()
+        nuevos = revividos = 0
+        for t, o in zip(sel, ok):
+            url = t[4]["url"]
+            if o:
+                revividos += muertos.pop(url, None) is not None
+            else:
+                nuevos += url not in muertos
+                muertos[url] = hoy
         sel = [t for t, o in zip(sel, ok) if o]
-        print(f"  descartados por no responder: {muertos}", file=sys.stderr)
+        # lo que ya no esta en el catalogo no hace falta seguir bloqueandolo
+        olvidados = [u for u in muertos if u not in catalogo]
+        for u in olvidados:
+            del muertos[u]
+        escribe_muertos(muertos)
+        aviso = f"  no responden: {nuevos} nuevos | en la lista negra: {len(muertos)}"
+        if revividos:
+            aviso += f" | resucitados: {revividos}"
+        if olvidados:
+            aviso += f" | fuera del catalogo: {len(olvidados)}"
+        print(aviso, file=sys.stderr)
+    elif bloqueadas:
+        print(f"lista negra: {len(bloqueadas)} streams excluidos sin verificar",
+              file=sys.stderr)
 
     sel.sort(key=lambda t: (t[0], t[1]))
     with open(a.salida, "w", encoding="utf-8") as f:
