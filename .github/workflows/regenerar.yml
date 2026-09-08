@@ -3,6 +3,15 @@ name: Regenerar lista
 on:
   schedule:
     - cron: "0 6 * * 1"   # cada lunes a las 06:00 UTC (01:00 Colombia)
+  push:
+    branches: [main]
+    # un canal nuevo en extra.m3u se publica hoy, no el lunes. Sin
+    # mi-lista.m3u aqui: el push del bot no dispara workflows (usa
+    # GITHUB_TOKEN), pero asi el bucle es imposible por construccion.
+    paths:
+      - extra.m3u
+      - lista.py
+      - muertos.txt
   workflow_dispatch:       # y a mano desde la pestaña Actions
 
 permissions:
@@ -17,17 +26,31 @@ jobs:
       - name: Generar la lista
         # sin --check a proposito: el runner esta en EE.UU. y muchos canales
         # latinoamericanos se le bloquean por geografia. Verificarlos desde
-        # aqui borraria canales que en Colombia funcionan.
+        # aqui borraria canales que en Colombia funcionan. Lo que de verdad
+        # esta muerto ya viene en muertos.txt, verificado desde casa.
         run: python3 lista.py -o mi-lista.m3u
 
       - name: Publicar solo si cambio
         run: |
           if git diff --quiet mi-lista.m3u; then
             echo "sin cambios"
-          else
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add mi-lista.m3u
-            git commit -m "Lista regenerada: $(grep -c '^#EXTINF' mi-lista.m3u) canales"
-            git push
+            exit 0
           fi
+
+          # suelo de seguridad: si la API cambia de forma o se cae a medias,
+          # mas vale fallar a la vista que publicar una lista mutilada en el
+          # televisor. Un canal caido de cada tres es churn normal; la mitad no.
+          antes=$(git show HEAD:mi-lista.m3u | grep -c '^#EXTINF' || echo 0)
+          ahora=$(grep -c '^#EXTINF' mi-lista.m3u || echo 0)
+          suelo=$(( antes * 60 / 100 ))
+          if [ "$ahora" -lt "$suelo" ]; then
+            echo "::error::La lista se hundio: $antes -> $ahora canales (suelo $suelo). No publico."
+            exit 1
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mi-lista.m3u
+          git commit -m "Lista regenerada: $ahora canales"
+          git push
+          echo "publicados $ahora canales (antes habia $antes)"

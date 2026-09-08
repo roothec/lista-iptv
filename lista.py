@@ -33,14 +33,25 @@ def baja(nombre):
     with urllib.request.urlopen(f"{API}/{nombre}.json", timeout=60) as r:
         return json.load(r)
 
+# Probamos con dos cabeceras: un navegador y algo parecido a lo que manda el
+# televisor. Solo damos un stream por muerto si falla con las DOS, porque
+# muerto significa lista negra, y de ahi no sale hasta el reintento de 30 dias:
+# un falso positivo cuesta un canal que si funcionaba.
+UAS = ("Mozilla/5.0",
+       "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 "
+       "(KHTML, like Gecko) Chrome/94 Safari/537.36")
+
 def vivo(url):
-    req = urllib.request.Request(url, method="GET")
-    req.add_header("User-Agent", "Mozilla/5.0")
-    try:
-        with urllib.request.urlopen(req, timeout=8) as r:
-            return r.status == 200
-    except Exception:
-        return False
+    for ua in UAS:
+        req = urllib.request.Request(url, method="GET")
+        req.add_header("User-Agent", ua)
+        try:
+            with urllib.request.urlopen(req, timeout=8) as r:
+                if r.status == 200:
+                    return True
+        except Exception:
+            pass
+    return False
 
 def lee_muertos(ruta=MUERTOS):
     """URL -> fecha en que se comprobo, desde casa, que no responde."""
@@ -66,17 +77,46 @@ def escribe_muertos(muertos, ruta=MUERTOS):
             f.write(f"{url}\t{fecha}\n")
 
 def propios(ruta="extra.m3u"):
-    """Lee extra.m3u: los canales que anade el usuario a mano."""
+    """Lee extra.m3u: los canales que anade el usuario a mano.
+
+    Cada canal son DOS lineas: #EXTINF y debajo su URL. Todo lo que no encaje
+    se avisa por stderr con su numero de linea; antes se descartaba en silencio
+    y era el error facil al editar a mano (una URL suelta no es un canal).
+    """
     try:
-        lineas = [l.strip() for l in open(ruta, encoding="utf-8") if l.strip()]
+        lineas = [(n, l.strip()) for n, l in enumerate(open(ruta, encoding="utf-8"), 1)]
     except FileNotFoundError:
         return []
+
+    def aviso(n, texto):
+        print(f"{ruta}:{n}: {texto}", file=sys.stderr)
+
     fuera, pend = [], None
-    for l in lineas:
+    for n, l in lineas:
+        if not l:
+            continue
         if l.startswith("#EXTINF"):
-            pend = l if "group-title=" in l else l.replace("#EXTINF:-1", '#EXTINF:-1 group-title="Mios"', 1)
-        elif not l.startswith("#") and pend:
-            fuera.append((pend, l)); pend = None
+            if pend:
+                aviso(pend[0], "este #EXTINF no tiene URL debajo, se ignora")
+            if "group-title=" in l:
+                info = l
+            elif l.startswith("#EXTINF:-1"):
+                info = l.replace("#EXTINF:-1", '#EXTINF:-1 group-title="Mios"', 1)
+            else:
+                info = l
+                aviso(n, 'sin group-title y sin "#EXTINF:-1": el canal saldra sin grupo')
+            pend = (n, info)
+        elif not l.startswith("#"):
+            if not pend:
+                aviso(n, f"URL sin su linea #EXTINF encima, se ignora: {l[:60]}")
+                continue
+            if l.endswith(".m3u"):
+                aviso(n, "ojo, un .m3u suele ser una LISTA de canales, no una "
+                         "emision: el televisor no puede reproducirla. Para mas "
+                         "canales del catalogo se usa --cats, no extra.m3u")
+            fuera.append((pend[1], l)); pend = None
+    if pend:
+        aviso(pend[0], "este #EXTINF no tiene URL debajo, se ignora")
     return fuera
 
 

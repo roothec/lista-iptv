@@ -1,2 +1,4 @@
 __pycache__/
-*.json
+
+# Sin "*.json" en bloque: la API se lee en memoria, no se cachea en disco, y
+# esa regla se habria tragado en silencio cualquier config o lista futura.
