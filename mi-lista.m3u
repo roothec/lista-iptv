@@ -685,6 +685,8 @@ https://amg00426-littledotstudio-thechatshow-samsungnz-uqmtt.amagi.tv/playlist/a
 https://aegis-cloudfront-1.tubi.video/e08080ff-3d87-4d9e-a156-91554fd2e39b/playlist.m3u8
 #EXTINF:-1 tvg-id="Tosh0.se" tvg-logo="https://images.pluto.tv/channels/65e977042873090008b48be9/colorLogoPNG.png" group-title="Comedia",Tosh.0 [SE]
 https://jmp2.uk/plu-65e977042873090008b48be9.m3u8
+#EXTINF:-1 tvg-id="USANetwork.us" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/USA_Network_logo_%282016%29.svg/960px-USA_Network_logo_%282016%29.svg.png" group-title="Comedia",USA Network [US]
+http://190.11.225.124:5000/live/usa_hd/playlist.m3u8
 #EXTINF:-1 tvg-id="Vayasemanita.us" tvg-logo="https://i.imgur.com/0bCLNUG.png" group-title="Comedia",Vaya semanita [US]
 https://jmp2.uk/plu-5f28009b150b2500077766b8.m3u8
 #EXTINF:-1 tvg-id="13C.cl" tvg-logo="https://i.imgur.com/Zfe2f5j.png" group-title="Cultura",13C [CL]
@@ -1497,6 +1499,8 @@ http://186.148.196.100:8000/play/a00d
 https://jmp2.uk/plu-677f927554f43dad4b3258aa.m3u8
 #EXTINF:-1 tvg-id="GiggleMug.us" tvg-logo="https://i.imgur.com/NbNHJXo.png" group-title="Infantil",Giggle Mug [US]
 https://tvsen3.aynaott.com/uYpFg3RV/index.m3u8
+#EXTINF:-1 tvg-id="GodStandsKidsClubTV.pk" tvg-logo="https://i.imgur.com/FxDBbpz.jpeg" group-title="Infantil",God Stands Kids Club TV [PK]
+https://online.godstands.tv:5443/WebRTCApp/streams/kidsenglish.m3u8
 #EXTINF:-1 tvg-id="HappyKids.us" tvg-logo="https://i.imgur.com/cPrUCFw.png" group-title="Infantil",HappyKids [US]
 https://dil9xdvretp0f.cloudfront.net/index.m3u8
 #EXTINF:-1 tvg-id="HeyArnold.us" tvg-logo="https://images.pluto.tv/channels/66c79221b1a34600087e264d/colorLogoPNG.png" group-title="Infantil",Hey Arnold! [US]
@@ -1537,6 +1541,8 @@ https://jmp2.uk/plu-6824ce95f09106f4b18f4114.m3u8
 http://177.234.249.178:8888/NICK-JR/index.m3u8
 #EXTINF:-1 tvg-id="NickJrPlutoTV.us" tvg-logo="https://images.pluto.tv/channels/62bdb75c3afd1200079146a6/colorLogoPNG.png" group-title="Infantil",Nick Jr. Pluto TV [US]
 https://jmp2.uk/plu-5ca6748a37b88b269472dad9.m3u8
+#EXTINF:-1 tvg-id="Nickelodeon.de" tvg-logo="https://i.imgur.com/E84jnP8.png" group-title="Infantil",Nickelodeon [DE]
+https://unilivemtveu-lh.akamaihd.net/i/nickde_1@448749/master.m3u8
 #EXTINF:-1 tvg-id="Nickelodeon.uk" tvg-logo="https://i.imgur.com/E84jnP8.png" group-title="Infantil",Nickelodeon [UK]
 http://tvsen7.aynascope.net/nicklodean/index.m3u8
 #EXTINF:-1 tvg-id="Nickelodeon.us" tvg-logo="https://i.imgur.com/E84jnP8.png" group-title="Infantil",Nickelodeon [US]
