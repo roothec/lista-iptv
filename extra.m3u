@@ -1,6 +1,11 @@
 # Tus canales, uno detras de otro. Formato: una linea #EXTINF y debajo la URL.
-# Si no pones group-title, van al grupo "Mios". El regenerado semanal no toca
-# este fichero: lo lee y lo anade al final de mi-lista.m3u.
+# Si no pones group-title, van al grupo "Mios". El regenerado no toca este
+# fichero: lo lee y lo anade al final de mi-lista.m3u.
+#
+# La URL tiene que ser una EMISION, normalmente .m3u8. Un .m3u casi siempre es
+# una LISTA de cientos de canales y el televisor no puede reproducirla; para
+# mas canales del catalogo se edita GRUPOS o se usa --cats, no este fichero.
+# Si algo se ignora, el generador te avisa con el numero de linea.
 #
 # Ejemplo (quita la almohadilla de las dos lineas para activarlo):
 # #EXTINF:-1 group-title="Mios",Mi canal de prueba

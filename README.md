@@ -24,14 +24,27 @@ https://raw.githubusercontent.com/roothec/lista-iptv/main/mi-lista.m3u
 - Escribe `tvg-id` y apunta al EPG de iptv-org, para tener guía de programación.
 
 ```bash
-python3 lista.py                      # las 12 categorías
+python3 lista.py                      # las 12 categorías de GRUPOS
 python3 lista.py --check              # además comprueba que cada stream responda
 python3 lista.py --cats animation,documentary --langs spa
+python3 lista.py -o otra-lista.m3u    # a otro fichero
 ```
+
+Las 12 categorías y el grupo con que salen en la TV, tal como están en
+`GRUPOS`: `animation`→Anime y animacion, `comedy`→Comedia, `culture`→Cultura,
+`documentary`→Documentales, `education`→Educacion, `kids`→Infantil,
+`movies`→Cine, `music`→Musica, `news`→Noticias, `science`→Ciencia,
+`series`→Series, `sports`→Deportes.
 
 `--check` conviene ejecutarlo **desde casa**, no en Actions: el runner de GitHub
 está en Estados Unidos y descartaría canales que aquí funcionan perfectamente.
 Lo que no responde queda apuntado en `muertos.txt`, y de ahí no vuelve.
+
+Cada stream se prueba con **dos cabeceras**, una de navegador y otra parecida a
+la que manda el televisor, y sólo se da por muerto si falla con las dos. Suena
+excesivo, pero como muerto significa lista negra, un falso positivo cuesta un
+canal que sí funcionaba: al estrenar este criterio, **30 de los 422 apuntados
+resucitaron** — respondían a la cabecera del televisor y no a la de navegador.
 
 ## La lista negra (`muertos.txt`)
 
@@ -73,7 +86,8 @@ Las URLs que desaparecen del catálogo de iptv-org se borran solas.
 ## Añadir canales propios
 
 Los canales que metas a mano van en **`extra.m3u`**, nunca en `mi-lista.m3u`
-(ese lo regenera el cron desde cero cada lunes y se los llevaría por delante).
+(ese se regenera desde cero cada lunes y en cada push, y se los llevaría por
+delante).
 
 ```
 #EXTINF:-1 group-title="Mios",Nombre del canal
@@ -103,7 +117,7 @@ python3 lista.py --cats animation,movies           # o recorta a lo que veas
 ```
 
 Con `--check`, para no publicar canales sin verificar. Y ojo: es normal que
-haya que repetirlo (ver la lista negra, más abajo).
+haya que repetirlo varias veces, por lo de la lista negra que se explica arriba.
 
 [cats]: https://iptv-org.github.io/api/categories.json
 
@@ -118,6 +132,9 @@ los canales que ya había, no publica y el workflow falla a la vista. Si la API
 de iptv-org cambia de forma o se cae a medias, prefieres un correo de error a
 una playlist mutilada en el televisor.
 
+Como el workflow hace commits por su cuenta, **haz `git pull` antes de tocar
+nada**, o te encontrarás la copia local atrasada.
+
 Los canales caen constantemente: hoy hay **439 streams en la lista negra** y
-quedan **1533 canales**, todos verificados desde casa. Conviene pasar un
-`--check` de vez en cuando y subir `mi-lista.m3u` junto con `muertos.txt`.
+unos **1536 canales**, verificados desde casa. Conviene pasar un `--check` de
+vez en cuando y subir `mi-lista.m3u` junto con `muertos.txt`.
