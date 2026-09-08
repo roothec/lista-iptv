@@ -26,6 +26,7 @@ GRUPOS = {
     "science": "Ciencia", "culture": "Cultura", "education": "Educacion",
     "kids": "Infantil", "movies": "Cine", "series": "Series",
     "news": "Noticias", "music": "Musica", "comedy": "Comedia",
+    "sports": "Deportes",
 }
 
 def baja(nombre):

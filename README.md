@@ -24,7 +24,7 @@ https://raw.githubusercontent.com/roothec/lista-iptv/main/mi-lista.m3u
 - Escribe `tvg-id` y apunta al EPG de iptv-org, para tener guía de programación.
 
 ```bash
-python3 lista.py                      # las 11 categorías
+python3 lista.py                      # las 12 categorías
 python3 lista.py --check              # además comprueba que cada stream responda
 python3 lista.py --cats animation,documentary --langs spa
 ```
@@ -87,6 +87,6 @@ python3 lista.py --cats animation,movies    # o recorta a lo que veas
 ## Mantenimiento
 
 El workflow `regenerar.yml` la rehace cada lunes y hace commit solo si cambió
-algo. Los canales caen constantemente: hoy hay **354 streams en la lista negra**
-y quedan **1409 canales**, todos verificados desde casa. Conviene pasar un
+algo. Los canales caen constantemente: hoy hay **422 streams en la lista negra**
+y quedan **1533 canales**, todos verificados desde casa. Conviene pasar un
 `--check` de vez en cuando y subir `mi-lista.m3u` junto con `muertos.txt`.
